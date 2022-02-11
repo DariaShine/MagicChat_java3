@@ -56,6 +56,8 @@ public class Controller implements Initializable {
     private Stage regStage;
     private RegController regController;
 
+    private String login;
+
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
         authPanel.setVisible(!authenticated);
@@ -67,6 +69,7 @@ public class Controller implements Initializable {
 
         if (!authenticated) {
             nickname = "";
+            FileRW.stop();
         }
 
         setTitle(nickname);
@@ -111,6 +114,10 @@ public class Controller implements Initializable {
                             if (str.startsWith(ServiceMessages.AUTH_OK)) {
                                 nickname = str.split(" ")[1];
                                 setAuthenticated(true);
+                                //подгружаем последние 100 сообщений
+
+                                textArea.appendText(FileRW.getLast100Lines(login));
+                                FileRW.start(login);
                                 break;
                             }
                             if (str.startsWith("/reg")) {
@@ -144,7 +151,9 @@ public class Controller implements Initializable {
 
                         } else {
                             textArea.appendText(str + "\n");
+                            FileRW.writeLine(str);
                         }
+
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -181,6 +190,8 @@ public class Controller implements Initializable {
         if (socket == null || socket.isClosed()) {
             connect();
         }
+
+        login = loginField.getText().trim();
 
         try {
             String msg = String.format("%s %s %s", ServiceMessages.AUTH,
